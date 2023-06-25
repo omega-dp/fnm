@@ -358,13 +358,16 @@ SPECTACULAR_SETTINGS = {
     "VERSION": "1.0.0",
     "SERVE_PERMISSIONS": ["rest_framework.permissions.IsAdminUser"],
 }
+# Vue
 # django-webpack-loader
 # ------------------------------------------------------------------------------
+VUE_FRONTEND_DIR = Path(BASE_DIR, "fux")
 WEBPACK_LOADER = {
     "DEFAULT": {
         "CACHE": not DEBUG,
-        "STATS_FILE": BASE_DIR / "webpack-stats.json",
+        "STATS_FILE":  Path(VUE_FRONTEND_DIR, "webpack-stats.json"),
         "POLL_INTERVAL": 0.1,
+        "TIMEOUT": None,
         "IGNORE": [r".+\.hot-update.js", r".+\.map"],
     }
 }
