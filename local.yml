@@ -1,0 +1,100 @@
+version: '3'
+
+volumes:
+  fnm_local_postgres_data: {}
+  fnm_local_postgres_data_backups: {}
+
+services:
+  django: &django
+    build:
+      context: .
+      dockerfile: ./compose/local/django/Dockerfile
+    image: fnm_local_django
+    container_name: fnm_local_django
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - .:/app:z
+    env_file:
+      - ./.envs/.local/.django
+      - ./.envs/.local/.postgres
+    ports:
+      - '8000:8000'
+    command: /start
+
+  postgres:
+    build:
+      context: .
+      dockerfile: ./compose/production/postgres/Dockerfile
+    image: fnm_production_postgres
+    container_name: fnm_local_postgres
+    volumes:
+      - fnm_local_postgres_data:/var/lib/postgresql/data
+      - fnm_local_postgres_data_backups:/backups
+    env_file:
+      - ./.envs/.local/.postgres
+
+  docs:
+    image: fnm_local_docs
+    container_name: fnm_local_docs
+    build:
+      context: .
+      dockerfile: ./compose/local/docs/Dockerfile
+    env_file:
+      - ./.envs/.local/.django
+    volumes:
+      - ./docs:/docs:z
+      - ./config:/app/config:z
+      - ./fnm:/app/fnm:z
+    ports:
+      - '9000:9000'
+    command: /start-docs
+
+  redis:
+    image: redis:6
+    container_name: fnm_local_redis
+
+  celeryworker:
+    <<: *django
+    image: fnm_local_celeryworker
+    container_name: fnm_local_celeryworker
+    depends_on:
+      - redis
+      - postgres
+    ports: []
+    command: /start-celeryworker
+
+  celerybeat:
+    <<: *django
+    image: fnm_local_celerybeat
+    container_name: fnm_local_celerybeat
+    depends_on:
+      - redis
+      - postgres
+    ports: []
+    command: /start-celerybeat
+
+  flower:
+    <<: *django
+    image: fnm_local_flower
+    container_name: fnm_local_flower
+    ports:
+      - '5555:5555'
+    command: /start-flower
+
+  node:
+    build:
+      context: .
+      dockerfile: ./compose/local/node/Dockerfile
+    image: fnm_local_node
+    container_name: fnm_local_node
+    depends_on:
+      - django
+    volumes:
+      - .:/app:z
+      # http://jdlm.info/articles/2016/03/06/lessons-building-node-app-docker.html
+      - /app/node_modules
+    command: npm run dev
+    ports:
+      - '3000:3000'
