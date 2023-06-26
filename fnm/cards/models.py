@@ -14,6 +14,9 @@ class JobCategory(models.Model):
     def __str__(self):
         return self.name
 
+    class Meta:
+        db_table = "JobCategory"
+
     def get_job_cards(self):
         return JobCard.objects.filter(job_category=self)
 
@@ -74,3 +77,6 @@ class JobCard(BaseModel):
 
     def __str__(self):
         return self.name
+
+    class Meta:
+        db_table = "JobCard"
