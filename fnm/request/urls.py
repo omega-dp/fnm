@@ -6,7 +6,7 @@ from .api.apis import ImprestRequestAPI, \
     LeaveRequestsListAPI, LeaveRequestUpdateAPI
 
 urlpatterns = [
-    path("imprest/", ImprestRequestAPI.as_view(), name="imprests"),
+    path("imprest-req/", ImprestRequestAPI.as_view(), name="imprests"),
     path("imprest/list/", ImprestRequestListAPI.as_view(), name="imprests-list"),
     path("imprest/action/<int:imprest_request_id>/", ImprestReqActionAPI.as_view(), name="action"),
     path("leave/", LeaveRequestAPI.as_view(), name="leave-request"),

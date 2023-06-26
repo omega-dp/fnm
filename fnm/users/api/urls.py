@@ -1,6 +1,6 @@
 from django.urls import include, path
 
-from .apis import UserProfileMeAPI, UserMeApi
+from .apis import UserProfileMeAPI
 
 from .auth import (
     UserJwtLoginApi,
@@ -38,6 +38,5 @@ urlpatterns = [
 
 urlpatterns += [
     # Other URLs
-    path("me/", UserMeApi.as_view(), name="me"),
-    path('me/profile/', UserProfileMeAPI.as_view(), name='profile'),
+    path('profile/', UserProfileMeAPI.as_view(), name='profile'),
 ]

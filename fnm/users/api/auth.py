@@ -64,7 +64,7 @@ class UserJwtLogoutApi(ApiAuthMixin, APIView):
     def post(self, request):
         auth_logout(request.user)
 
-        response = Response()
+        response = Response({"message": "Logout successful."}, status=status.HTTP_200_OK)
 
         if settings.JWT_AUTH["JWT_AUTH_COOKIE"] is not None:
             response.delete_cookie(settings.JWT_AUTH["JWT_AUTH_COOKIE"])

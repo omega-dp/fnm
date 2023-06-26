@@ -4,14 +4,13 @@ from django.contrib import admin, messages
 from rest_framework.exceptions import ValidationError
 
 from .models import ImprestRequest
-from fnm.request.api.services import create_imprest_request, create_leave_request
 from .models import LeaveRequest
 from fnm.request.api.services import approve_leave_request, reject_leave_request, escalate_leave_request, cancel_leave_request
 
 
 @admin.register(ImprestRequest)
 class ImprestRequestAdmin(admin.ModelAdmin):
-    list_display = ("user", "description", "status", "created_at", "updated_at", "imprest_amount", "action_taken_by")
+    list_display = ("user", "description", "status", "created_at", "updated_at", "imprest_amount", "get_action_taken_by")
     search_fields = ("user__email", "description")
     list_filter = ("status",)
     readonly_fields = ("created_at", "updated_at")
@@ -22,26 +21,9 @@ class ImprestRequestAdmin(admin.ModelAdmin):
         ("Timestamps", {"fields": ("created_at", "updated_at")}),
     )
 
-    def save_model(self, request, obj, form, change):
-        if change:
-            return super().save_model(request, obj, form, change)
-
-        try:
-            user = form.cleaned_data.get("user")
-            description = form.cleaned_data.get("description")
-            status = form.cleaned_data.get("status")
-            supporting_documents = form.cleaned_data.get("supporting_documents")
-            choices = form.cleaned_data.get("choices", [])
-
-            create_imprest_request(
-                user=user,
-                description=description,
-                status=status,
-                supporting_documents=supporting_documents,
-                choices=choices,
-            )
-        except ValidationError as exc:
-            self.message_user(request, str(exc), messages.ERROR)
+    def get_action_taken_by(self, obj):
+        return obj.action_taken_by.email if obj.action_taken_by else None
+    get_action_taken_by.short_description = "Action Taken By"
 
 
 @admin.register(LeaveRequest)
