@@ -25,4 +25,6 @@ drf-spectacular==0.26.3  # https://github.com/tfranzel/drf-spectacular
 django-webpack-loader==2.0.1  # https://github.com/django-webpack/django-webpack-loader
 djangorestframework-simplejwt==5.2.2
 boto3~=1.26.160
+django-filter~=23.2
+
 

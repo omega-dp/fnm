@@ -67,6 +67,8 @@ celerybeat-schedule
 
 # Environments
 .venv
+.env
+
 venv/
 ENV/
 
@@ -327,7 +329,7 @@ tags
 dump.rdb
 
 ### Project template
-fnm/media/
+## fnm/media/
 
 .pytest_cache/
 .ipython/
