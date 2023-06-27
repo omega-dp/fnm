@@ -63,19 +63,6 @@ class ImprestRequest(BaseModel):
         self.save()
 
 
-class LeaveCredit(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    year = models.IntegerField()
-    leave_balance = models.IntegerField()
-
-    def __str__(self):
-        return f"Leave Credit: {self.user.email} - {self.year}"
-
-    @property
-    def has_credit(self):
-        return self.leave_balance > 0
-
-
 class LeaveRequest(BaseModel):
     STATUS_CHOICES = [
         ("pending", "Pending"),
@@ -83,26 +70,26 @@ class LeaveRequest(BaseModel):
         ("approved", "Approved"),
         ("escalated", "Escalated"),
         ("rejected", "Rejected"),
-        ("cancelled", 'Cancelled'),
-
+        ("cancelled", "Cancelled"),
     ]
+
     LEAVE_TYPES = (
-        ("day_off", 'Day Off'),
-        ("yearly", 'Yearly Leave'),
-        ("sick", 'Sick Leave'),
-        ("commuted", 'Commuted Leave'),
+        ("day_off", "Day Off"),
+        ("yearly", "Yearly Leave"),
+        ("sick", "Sick Leave"),
+        ("commuted", "Commuted Leave"),
     )
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="leave_requests")
     is_new = models.BooleanField(default=True)
     approver = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     leave_type = models.CharField(max_length=20, choices=LEAVE_TYPES, default="yearly")
-    duration = models.IntegerField(default=1)
+    duration = models.IntegerField(default=0)
+    custom_duration = models.IntegerField(default=0)
     leave_attachment = models.FileField(upload_to="", blank=True, null=True)
-    reason = models.TextField(max_length=200, blank=True)
-    start_date = models.DateField(null=True)
-    end_date = models.DateField(null=True)
-    leave_credit = models.ForeignKey(LeaveCredit, on_delete=models.SET_NULL, null=True, blank=True)
+    reason = models.TextField(max_length=200, default="")
+    start_date = models.DateField(null=True, default=None)
+    end_date = models.DateField(null=True, default=None, blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
 
     def __str__(self):
@@ -113,28 +100,29 @@ class LeaveRequest(BaseModel):
             # Set default start_date as a week ahead
             self.start_date = datetime.date.today() + timedelta(days=7)
 
-            # Set default duration as 1 day if not provided
-        if self.duration is None:
-            self.duration = 1
-
-        if self.duration == 1 and not self.reason:
-            self.reason = f"A day off for {self.user.email}"
-
-        # Calculate the end_date based on the start_date and duration
-        if self.start_date and self.duration > 0:
+        if self.custom_duration > 0:
+            # Use custom_duration if provided and greater than 0, otherwise use duration as 0
+            self.duration = self.custom_duration
             self.end_date = self.start_date + timedelta(days=self.duration - 1)
-
-        # Set default reason if duration is 1 and reason is not provided
-        if self.duration == 1 and (not self.reason or self.reason.strip() == ''):
-            self.reason = f"A day off for {self.user.email}"
+        else:
+            self.duration = 0
+            self.end_date = None
 
         super().save(*args, **kwargs)
+
+    def is_pending(self):
+        return self.status == "pending"
+
+    @property
+    def leave_balance(self):
+        # Calculate the leave balance based on the leave requests
+        total_leave_days = sum(
+            self.user.leave_requests.filter(status="approved", leave_type="yearly").values_list("duration", flat=True))
+        return 40 - total_leave_days
 
     class Meta:
         db_table = "LeaveRequest"
 
-    def is_pending(self):
-        return self.status == "pending"
 
 
 

@@ -38,5 +38,4 @@ class LeaveRequestFilter(django_filters.FilterSet):
             "duration": ["exact", "gt", "lt"],
             "status": ["exact"],
             "approver__email": ["exact"],
-            "leave_credit": ["exact", "gt", "lt"],
         }

@@ -3,7 +3,7 @@ from rest_framework.generics import get_object_or_404
 
 from .selectors import imprest_request_list, leave_requests_list
 from ..models import ImprestRequest, LeaveRequest
-from .services import create_imprest_request, imprest_request_update, leave_request_update, update_leave_credit_balance
+from .services import create_imprest_request, imprest_request_update, update_leave_request
 from ...api.mixins import ApiAuthMixin, StaffRestrictedApiAuthMixin, CanRequestMixin
 from ...api.pagination import get_paginated_response, LimitOffsetPagination
 from ...users.models import User
@@ -157,33 +157,57 @@ class ImprestRequestListAPI(ApiAuthMixin, APIView):
         )
 
 
-class LeaveRequestAPI(ApiAuthMixin, APIView):
+class LeaveRequestCreateAPI(ApiAuthMixin, APIView):
     class InputSerializer(serializers.Serializer):
         user_id = serializers.IntegerField()
+        leave_type = serializers.ChoiceField(choices=LeaveRequest.LEAVE_TYPES, default="yearly")
+        custom_duration = serializers.IntegerField(required=False, default=0)
+        leave_attachment = serializers.FileField(required=False)
+        reason = serializers.CharField()
         start_date = serializers.DateField(required=False)
         end_date = serializers.DateField(required=False)
-        duration = serializers.IntegerField(required=False)
+        status = serializers.ChoiceField(choices=LeaveRequest.STATUS_CHOICES, default="pending")
 
     def post(self, request):
         serializer = self.InputSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         user_id = serializer.validated_data.get("user_id")
+        leave_type = serializer.validated_data.get("leave_type")
+        custom_duration = serializer.validated_data.get("custom_duration")
+        leave_attachment = serializer.validated_data.get("leave_attachment")
+        reason = serializer.validated_data.get("reason")
         start_date = serializer.validated_data.get("start_date")
         end_date = serializer.validated_data.get("end_date")
-        duration = serializer.validated_data.get("duration")
-        reason = serializer.validated_data.get("reason")
 
         try:
-            user = User.objects.get(id=user_id)
             leave_request = create_leave_request(
-                user=user,
+                user_id=user_id,
+                leave_type=leave_type,
+                custom_duration=custom_duration,
+                leave_attachment=leave_attachment,
+                reason=reason,
                 start_date=start_date,
                 end_date=end_date,
-                duration=duration,
-                reason=reason,
+                status=status,
             )
-            return Response({"message": "Leave request created successfully."})
+
+            leave_data = {
+                "id": leave_request.id,
+                "user": leave_request.user.email,
+                "leave_type": leave_request.leave_type,
+                "custom_duration": leave_request.custom_duration,
+                "leave_attachment": leave_request.leave_attachment.url if leave_request.leave_attachment else None,
+                "reason": leave_request.reason,
+                "start_date": leave_request.start_date,
+                "end_date": leave_request.end_date,
+                "status": leave_request.status
+            }
+
+            return Response({
+                "message": "Leave request created successfully.",
+                "leave_request": leave_data
+            })
         except User.DoesNotExist:
             return Response({"message": "User not found."}, status=404)
 
@@ -191,6 +215,11 @@ class LeaveRequestAPI(ApiAuthMixin, APIView):
 class LeaveRequestActionAPI(StaffRestrictedApiAuthMixin, APIView):
     class InputSerializer(serializers.Serializer):
         status = serializers.ChoiceField(choices=LeaveRequest.STATUS_CHOICES)
+
+    class OutputSerializer(serializers.ModelSerializer):
+        class Meta:
+            model = LeaveRequest
+            exclude = ("user",)
 
     def patch(self, request, leave_request_id):
         serializer = self.InputSerializer(data=request.data)
@@ -209,8 +238,6 @@ class LeaveRequestActionAPI(StaffRestrictedApiAuthMixin, APIView):
                 leave_request = approve_leave_request(
                     leave_request=leave_request,
                     approver=user,
-                    duration=leave_request.duration,
-                    start_date=leave_request.start_date,
                 )
             elif status == "rejected":
                 leave_request = reject_leave_request(leave_request=leave_request, approver=user)
@@ -219,34 +246,58 @@ class LeaveRequestActionAPI(StaffRestrictedApiAuthMixin, APIView):
             elif status == "cancelled":
                 leave_request = cancel_leave_request(leave_request=leave_request)
 
-            leave_request_data = {
-                "id": leave_request.id,
-                "user": leave_request.user.email,
-                "approver": leave_request.approver.email if leave_request.approver else None,
-                "leave_type": leave_request.leave_type,
-                "duration": leave_request.duration,
-                "start_date": leave_request.start_date,
-                "end_date": leave_request.end_date,
-                "status": leave_request.status,
-            }
-
+            serializer = self.OutputSerializer(leave_request)
             return Response(
-                {"message": "Leave request status updated successfully.", "leave_request_data": leave_request_data})
+                {
+                    "message": "Leave request status updated successfully.",
+                    "leave_request_data": serializer.data,
+                }
+            )
         except ValueError as e:
             return Response({"message": str(e)}, status=400)
 
 
 class LeaveRequestUpdateAPI(ApiAuthMixin, APIView):
+    class OutputSerializer(serializers.ModelSerializer):
+        user = serializers.CharField(source="user.email")
+        approver = serializers.CharField(source="approver.email", allow_null=True)
+
+        class Meta:
+            model = LeaveRequest
+            fields = "__all__"
+
     def patch(self, request, leave_request_id):
+        user = request.user
         duration = request.data.get("duration")
+        start_date = request.data.get("start_date")
+        reason = request.data.get("reason")
 
         leave_request = get_object_or_404(LeaveRequest, id=leave_request_id)
 
+        if not duration and not start_date and not reason:
+            return Response({"message": "At least one updateable field must be provided."},
+                            status=status.HTTP_400_BAD_REQUEST)
+
         try:
-            update_leave_credit_balance(leave_request)
-            leave_request.duration = duration  # Update the duration
-            leave_request.save()
-            return Response({"message": "Leave request updated successfully."})
+            if user == leave_request.user:
+                # User can only update certain details of their own request
+                update_leave_request(
+                    leave_request=leave_request,
+                    duration=duration,
+                    start_date=start_date,
+                    reason=reason,
+                )
+            else:
+                # Staff and superusers can update any details of the leave request
+                update_leave_request(
+                    leave_request=leave_request,
+                    duration=duration,
+                    start_date=start_date,
+                    reason=reason,
+                )
+
+            serializer = self.OutputSerializer(leave_request)
+            return Response({"message": "Leave request updated successfully.", "leave_request_data": serializer.data})
         except ValueError as e:
             return Response({"message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -260,14 +311,14 @@ class LeaveRequestsListAPI(ApiAuthMixin, APIView):
         status = serializers.ChoiceField(choices=LeaveRequest.STATUS_CHOICES, required=False)
         user_id = serializers.IntegerField(required=False)
         reason = serializers.CharField(required=False)
-        leave_credit = serializers.CharField(required=False)
+        # leave_credit = serializers.CharField(required=False)
 
     class OutputSerializer(serializers.ModelSerializer):
         action_taker = serializers.EmailField(source='approver.email', read_only=True)
 
         class Meta:
             model = LeaveRequest
-            fields = ("id", "user", "reason", "status", "leave_credit", "action_taker")
+            fields = ("id", "user", "reason", "status", "action_taker")
 
     def get(self, request):
         # Make sure the filters are valid, if passed

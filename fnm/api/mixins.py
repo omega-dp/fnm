@@ -10,7 +10,6 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
-from fnm.request.models import LeaveCredit
 
 
 def get_auth_header(headers):
@@ -101,18 +100,13 @@ class StaffRestrictedApiAuthMixin(ApiAuthMixin):
 
 class CanRequestMixin(ApiAuthMixin):
     def can_request_leave(self, user, duration):
-        # Check if the user has a leave credit entry
-        try:
-            leave_credit = LeaveCredit.objects.get(user=user)
-        except LeaveCredit.DoesNotExist:
-            return False, "Leave credit entry not found for the user."
-
         # Check if the user is still active (based on your custom logic)
         if not user.is_active:
             return False, "User is not active."
 
         # Check if the user has enough leave balance for the requested duration
-        if leave_credit.leave_balance < duration:
+        remaining_days = user.leave_requests.remaining_leave_balance()
+        if remaining_days < duration:
             return False, "Insufficient leave balance."
 
         return True, "User can request leave."

@@ -1,10 +1,10 @@
 from datetime import date, timedelta
 from typing import Optional
 
-from django.db import transaction
+from django.db import transaction, models
 
 from fnm.users.models import User
-from fnm.request.models import ImprestRequest, LeaveRequest, LeaveCredit
+from fnm.request.models import ImprestRequest, LeaveRequest
 
 
 def create_imprest_request(
@@ -59,119 +59,78 @@ def imprest_request_update(*, imprest_request: ImprestRequest, status: str, user
     return imprest_request
 
 
+def adjust_leave_balance(user, duration):
+    yearly_leave_requests = user.leave_requests.filter(status="approved", leave_type="yearly")
+    total_leave_days = yearly_leave_requests.aggregate(total_days=models.Sum('duration'))['total_days'] or 0
+    remaining_days = 40 - total_leave_days
+
+    if duration > remaining_days:
+        raise ValueError("Insufficient leave balance for the requested duration.")
+
+    return remaining_days - duration
 
 
-@transaction.atomic
-def create_leave_request(*, user: User,
+def create_leave_request(user_id, leave_type, custom_duration, leave_attachment, reason, start_date, end_date, status):
+    try:
+        user = User.objects.get(id=user_id)
+        leave_request = LeaveRequest.objects.create(
+            user=user,
+            leave_type=leave_type,
+            custom_duration=custom_duration,
+            leave_attachment=leave_attachment,
+            reason=reason,
+            start_date=start_date,
+            end_date=end_date,
+            status=status
+        )
+        return leave_request
+    except User.DoesNotExist:
+        raise ValueError("User not found.")
+
+
+def update_leave_request(*, leave_request: LeaveRequest,
                          start_date: Optional[date] = None,
-                         end_date: Optional[date] = None,
                          duration: Optional[int] = None,
                          reason: Optional[str]) -> LeaveRequest:
-    leave_request = LeaveRequest(
-        user=user,
-        start_date=start_date,
-        end_date=end_date,
-        duration=duration,
-        reason=reason
-    )
+    if start_date:
+        leave_request.start_date = start_date
+    if duration:
+        leave_request.duration = duration
+    if reason:
+        leave_request.reason = reason
+
     leave_request.save()
     return leave_request
 
 
-@transaction.atomic
-def approve_leave_request(*, leave_request: LeaveRequest, approver: User, duration: int,
-                          start_date: date) -> LeaveRequest:
+def approve_leave_request(*, leave_request: LeaveRequest, approver: User) -> LeaveRequest:
+    remaining_days = adjust_leave_balance(leave_request.user, leave_request.duration)
+
+    if remaining_days < 0:
+        raise ValueError("Insufficient leave balance for the requested duration.")
+
     leave_request.approver = approver
-    leave_request.duration = duration
-    leave_request.updated_at = start_date
-
-    # Calculate the end date based on the start date and duration
-    if leave_request.start_date:
-        leave_request.end_date = leave_request.start_date + timedelta(days=leave_request.duration)
-
-    # Perform validations
-    if leave_request.start_date and leave_request.end_date and leave_request.start_date > leave_request.end_date:
-        raise ValueError("Start date cannot be after the end date.")
-    if leave_request.duration < 0:
-        raise ValueError("Duration cannot be negative.")
-
     leave_request.status = "approved"
     leave_request.save()
-
     return leave_request
 
 
-@transaction.atomic
 def reject_leave_request(*, leave_request: LeaveRequest, approver: User) -> LeaveRequest:
     leave_request.approver = approver
     leave_request.status = "rejected"
     leave_request.save()
-
     return leave_request
 
 
-@transaction.atomic
 def escalate_leave_request(*, leave_request: LeaveRequest, approver: User) -> LeaveRequest:
     leave_request.approver = approver
     leave_request.status = "escalated"
     leave_request.save()
-
     return leave_request
 
 
-@transaction.atomic
 def cancel_leave_request(*, leave_request: LeaveRequest) -> LeaveRequest:
     leave_request.status = "cancelled"
     leave_request.save()
-
     return leave_request
-
-
-def leave_request_update(*, leave_request: LeaveRequest, duration: int) -> None:
-    if leave_request.is_new:
-        raise ValueError("Leave request update not allowed for a new request.")
-
-    leave_credit = leave_request.leave_credit
-
-    if leave_request.status != "approved":
-        raise ValueError("Leave request must be in 'approved' status for updates.")
-
-    previous_duration = leave_request.duration
-    consumed_days = duration - previous_duration
-
-    if consumed_days < 0:
-        leave_credit.leave_balance += abs(consumed_days)
-    elif consumed_days > 0:
-        if leave_credit.leave_balance < consumed_days:
-            raise ValueError("Insufficient leave balance for the requested update.")
-        leave_credit.leave_balance -= consumed_days
-
-    leave_request.duration = duration
-    leave_request.end_date = leave_request.start_date + timedelta(days=duration - 1)
-    leave_request.save()
-    leave_credit.save()
-
-
-def update_leave_credit_balance(leave_request):
-    if leave_request.is_new:
-        # Create a new leave credit entry for the user
-        leave_credit = LeaveCredit.objects.create(
-            user=leave_request.user,
-            year=leave_request.start_date.year,
-            leave_balance=60
-        )
-        leave_request.leave_credit = leave_credit
-        leave_request.is_new = False
-    else:
-        # Get the existing leave credit entry for the user
-        leave_credit = leave_request.leave_credit
-
-    # Calculate the leave balance based on the requested duration
-    leave_balance = leave_credit.leave_balance + leave_request.duration  # Use '+' to adjust the balance
-
-    if leave_balance < 0:
-        raise ValueError("Insufficient leave balance")
-
-    leave_credit.leave_balance = leave_balance
-    leave_credit.save()
 

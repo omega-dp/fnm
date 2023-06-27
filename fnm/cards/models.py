@@ -1,33 +1,21 @@
 from django.db import models
+from django.utils import timezone
 
 from fnm.common.models import BaseModel
 from fnm.users.models import User
-from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 
 
-class JobCategory(models.Model):
-    name = models.CharField(max_length=100)
-    description = models.TextField()
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return self.name
-
-    class Meta:
-        db_table = "JobCategory"
-
-    def get_job_cards(self):
-        return JobCard.objects.filter(job_category=self)
-
-    def get_active_job_cards(self):
-        return self.get_job_cards().exclude(status="closed")
-
-    def get_completed_job_cards(self):
-        return self.get_job_cards().filter(status="completed")
+class JobCategory(models.TextChoices):
+    SUPPORT = "support", _("Support")
+    DESIGN = "design", _("Design")
+    PROJECT = "project", _("Project")
+    USUAL = "usual", _("Usual")
+    # Add more choices here
 
 
 class JobCard(BaseModel):
+
     STATUS_CHOICES = [
         ("pending", "Pending"),
         ("assigned", "Assigned"),
@@ -36,8 +24,11 @@ class JobCard(BaseModel):
         ("completed", "Completed"),
         ("closed", "Closed"),
     ]
-
-    job_category = models.ForeignKey(JobCategory, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE,  related_name='created_job_cards', blank=True, null=True)
+    job_category = models.CharField(
+        choices=JobCategory.choices,
+        default=JobCategory.USUAL, max_length=20,
+    )
     name = models.CharField(max_length=100)
     description = models.TextField()
     assigned_to = models.ForeignKey(User, on_delete=models.CASCADE, related_name="assigned_jobs", blank=True, null=True)
