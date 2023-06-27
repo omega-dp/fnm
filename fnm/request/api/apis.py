@@ -1,3 +1,4 @@
+from rest_framework.fields import IntegerField
 from rest_framework.generics import get_object_or_404
 
 from .selectors import imprest_request_list, leave_requests_list
@@ -18,15 +19,14 @@ from .services import (
 )
 
 
-
 class ImprestRequestAPI(ApiAuthMixin, APIView):
     class InputSerializer(serializers.Serializer):
         user_id = serializers.IntegerField()
         description = serializers.CharField()
         status = serializers.ChoiceField(choices=ImprestRequest.STATUS_CHOICES, default="pending")
         supporting_documents = serializers.FileField(required=False)
-        imprest_amount = serializers.CharField(required=False)
-        choices = serializers.ListField(child=serializers.CharField(), required=False)
+        imprest_amount = serializers.CharField(required=False, default="0.00")
+        action_taken_by_id = serializers.IntegerField(required=False)
 
     def post(self, request):
         serializer = self.InputSerializer(data=request.data)
@@ -37,7 +37,6 @@ class ImprestRequestAPI(ApiAuthMixin, APIView):
         status = serializer.validated_data.get("status")
         imprest_amount = serializer.validated_data.get("imprest_amount")
         supporting_documents = serializer.validated_data.get("supporting_documents")
-        choices = serializer.validated_data.get("choices", [])
 
         try:
             user = User.objects.get(id=user_id)
@@ -47,9 +46,18 @@ class ImprestRequestAPI(ApiAuthMixin, APIView):
                 status=status,
                 imprest_amount=imprest_amount,
                 supporting_documents=supporting_documents,
-                choices=choices,
             )
-            return Response({"message": "Imprest request created successfully."})
+            imprest_data = {
+                "id": imprest_request.id,
+                "user": imprest_request.user.email,
+                "description": imprest_request.description,
+                "status": imprest_request.status,
+                "supporting_documents": imprest_request.supporting_documents.url if imprest_request.supporting_documents else None,
+            }
+            return Response({
+                "message": "Imprest request created successfully.",
+                "imprest_request": imprest_data
+            })
         except User.DoesNotExist:
             return Response({"message": "User not found."}, status=404)
 
@@ -74,13 +82,20 @@ class ImprestReqActionAPI(StaffRestrictedApiAuthMixin, APIView):
             imprest_request_update(imprest_request=imprest_request, status=status, user=user)
             imprest_data = {
                 "id": imprest_request.id,
-                "user": imprest_request.user.email,
-                "action_taken_by": user.email,
+                "user": {
+                    "email": imprest_request.user.email,
+                },
+                "action_taken_by": {
+                    "email": user.email,
+                },
                 "description": imprest_request.description,
                 "status": imprest_request.status,
                 "supporting_documents": imprest_request.supporting_documents.url if imprest_request.supporting_documents else None,
             }
-            return Response({"message": "Imprest request status updated successfully.", "imprest_data": imprest_data})
+            return Response({
+                "message": "Imprest request status updated successfully.",
+                "imprest_data": imprest_data,
+            })
         except ValueError as e:
             return Response({"message": str(e)}, status=400)
 
@@ -96,12 +111,32 @@ class ImprestRequestListAPI(ApiAuthMixin, APIView):
         description = serializers.CharField(required=False)
         imprest_amount = serializers.CharField(required=False)
         action_taken_by = serializers.CharField(required=False)
+        user_email = serializers.CharField(required=False)
+        created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S", read_only=True)
+        updated_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S", read_only=True)
 
     class OutputSerializer(serializers.ModelSerializer):
+        requestor_email = serializers.CharField(source="user.email", read_only=True)
         actor_email = serializers.EmailField(source='action_taken_by.email', read_only=True)
+        supporting_documents_url = serializers.SerializerMethodField()
+
+        def get_supporting_documents_url(self, instance):
+            return instance.supporting_documents.url if instance.supporting_documents else None
+
         class Meta:
             model = ImprestRequest
-            fields = ("id", "user", "description", "status", "imprest_amount", "actor_email")
+            fields = (
+                "id",
+                "requestor_email",
+                "description",
+                "status",
+                "supporting_documents_url",
+                "imprest_amount",
+                "actor_email",
+                "created_at",
+                "updated_at",
+
+            )
 
     def get(self, request):
         # Make sure the filters are valid, if passed
@@ -138,7 +173,6 @@ class LeaveRequestAPI(ApiAuthMixin, APIView):
         end_date = serializer.validated_data.get("end_date")
         duration = serializer.validated_data.get("duration")
         reason = serializer.validated_data.get("reason")
-
 
         try:
             user = User.objects.get(id=user_id)
@@ -252,6 +286,3 @@ class LeaveRequestsListAPI(ApiAuthMixin, APIView):
             request=request,
             view=self,
         )
-
-
-

@@ -13,13 +13,6 @@ from ...api.pagination import get_paginated_response
 User = get_user_model()
 
 
-class UserMeApi(ApiAuthMixin, APIView):
-    def get(self, request):
-        data = user_get_login_data(user=request.user)
-
-        return Response(data)
-
-
 class UserProfileMeAPI(ApiAuthMixin, APIView):
     class InputSerializer(serializers.Serializer):
         contactNo = serializers.CharField(required=False)

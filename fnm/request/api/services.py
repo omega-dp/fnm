@@ -13,7 +13,6 @@ def create_imprest_request(
     status: str = "pending",
     imprest_amount: Optional[str] = None,
     supporting_documents: Optional[bytes] = None,
-    choices: list[str] = []
 ) -> ImprestRequest:
     imprest_request = ImprestRequest.objects.create(
         user=user,
@@ -22,8 +21,6 @@ def create_imprest_request(
         status=status,
         supporting_documents=supporting_documents,
     )
-    for choice in choices:
-        imprest_request.choices.create(text=choice)
 
     return imprest_request
 
@@ -31,15 +28,36 @@ def create_imprest_request(
 @transaction.atomic
 def imprest_request_update(*, imprest_request: ImprestRequest, status: str, user: User) -> ImprestRequest:
     valid_status_choices = [choice[0] for choice in ImprestRequest.STATUS_CHOICES]
+    valid_action_choices = [choice[0] for choice in ImprestRequest.ACTION_CHOICES]
 
     if status not in valid_status_choices:
         raise ValueError(f"Invalid status. Valid choices are: {', '.join(valid_status_choices)}")
 
-    imprest_request.status = status
-    imprest_request.action_taken_by = user
-    imprest_request.save()
+    current_status = imprest_request.status
+    current_action = imprest_request.monitoring
 
+    if current_status == status:
+        return imprest_request
+
+    status_index = valid_status_choices.index(status)
+    current_action_index = valid_action_choices.index(current_action)
+
+    # Perform clean updates
+    if status_index < current_action_index:
+        imprest_request.status = status
+        imprest_request.action_taken_by = user
+        imprest_request.action_count = status_index
+        imprest_request.monitoring = ImprestRequest.ACTION_CHOICES[status_index][0]
+    # Perform quick updates without repeating actions
+    elif status_index == current_action_index + 1:
+        imprest_request.status = status
+        imprest_request.action_taken_by = user
+        imprest_request.action_count = status_index
+        imprest_request.monitoring = ImprestRequest.ACTION_CHOICES[status_index][0]
+
+    imprest_request.save()
     return imprest_request
+
 
 
 

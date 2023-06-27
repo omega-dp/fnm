@@ -7,7 +7,8 @@ from ..models import ImprestRequest, LeaveRequest
 def imprest_request_list(*, filters=None) -> QuerySet[ImprestRequest]:
     filters = filters or {}
 
-    queryset = ImprestRequest.objects.all()
+    queryset = ImprestRequest.objects.all().select_related("user").prefetch_related("action_taken_by")
+
     filtered_queryset = ImprestRequestFilter(filters, queryset).qs
 
     return filtered_queryset

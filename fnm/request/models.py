@@ -9,6 +9,7 @@ from fnm.common.models import BaseModel
 User = get_user_model()
 
 
+
 class ImprestRequest(BaseModel):
     STATUS_CHOICES = [
         ("pending", "Pending"),
@@ -17,12 +18,21 @@ class ImprestRequest(BaseModel):
         ("closed", "Closed"),
     ]
 
+    ACTION_CHOICES = [
+        ("initiated", "Initiated"),
+        ("approving", "Approving"),
+        ("escalating", "Escalating"),
+        ("closing", "Closing"),
+    ]
+
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="imprest_requests")
     description = models.TextField(max_length=200, blank=True, null=True)
     imprest_amount = models.CharField(max_length=20, blank=True, null=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
     supporting_documents = models.FileField(upload_to="imprest/supporting_documents/", blank=True, null=True)
     action_taken_by = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True, related_name="imprest_actions")
+    action_count = models.PositiveIntegerField(default=0)
+    monitoring = models.CharField(max_length=20, choices=ACTION_CHOICES, default="initiated")
 
     def __str__(self):
         return f"Imprest Request #{self.pk}"
@@ -36,14 +46,20 @@ class ImprestRequest(BaseModel):
 
     def approve(self):
         self.status = "approved"
+        self.action_count += 1
+        self.monitoring = self.ACTION_CHOICES[self.action_count][0] if self.action_count < len(self.ACTION_CHOICES) else "completed"
         self.save()
 
     def escalate(self):
         self.status = "escalated"
+        self.action_count += 1
+        self.monitoring = self.ACTION_CHOICES[self.action_count][0] if self.action_count < len(self.ACTION_CHOICES) else "completed"
         self.save()
 
     def close(self):
         self.status = "closed"
+        self.action_count += 1
+        self.monitoring = self.ACTION_CHOICES[self.action_count][0] if self.action_count < len(self.ACTION_CHOICES) else "completed"
         self.save()
 
 
