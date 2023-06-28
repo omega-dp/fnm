@@ -26,10 +26,19 @@ def auth_logout(user: User) -> User:
     return user
 
 
-def user_create(
-    *, email: str, is_active: bool = True, is_admin: bool = False, password: Optional[str] = None
-) -> User:
-    user = User.objects.create_user(email=email, is_active=is_active, is_admin=is_admin, password=password)
+def user_create(*,
+                email: str,
+                is_active: bool = True,
+                is_superuser: bool = False,
+                is_admin: bool = False,
+                password: Optional[str] = None) -> User:
+    user = User.objects.create_user(
+        email=email,
+        is_admin=is_admin,
+        is_active=is_active,
+        password=password)
+    user.is_superuser = is_superuser
+    user.save()
 
     return user
 

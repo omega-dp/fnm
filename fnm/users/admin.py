@@ -18,6 +18,7 @@ admin.site.register(UserProfile)
 class BaseUserAdmin(admin.ModelAdmin):
     list_display = ("email", "is_admin", "is_superuser", "is_active", "created_at", "updated_at")
 
+    list_per_page = 25
     inlines = [UserProfileInline]
     search_fields = ("email",)
 

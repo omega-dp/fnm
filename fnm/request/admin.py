@@ -12,6 +12,7 @@ from fnm.request.api.services import approve_leave_request, reject_leave_request
 class ImprestRequestAdmin(admin.ModelAdmin):
     list_display = ("user", "description", "status", "created_at", "updated_at", "imprest_amount", "get_action_taken_by")
     search_fields = ("user__email", "description")
+    list_per_page = 25
     list_filter = ("status",)
     readonly_fields = ("created_at", "updated_at")
 
@@ -35,6 +36,7 @@ class LeaveRequestAdmin(admin.ModelAdmin):
 
     list_display = ("user", "leave_type", "status", "duration", "reason", "start_date", "end_date")
     list_filter = ("status",)
+    list_per_page = 25
     search_fields = ("user__email",)
     actions = ["approve_leave", "reject_leave", "escalate_leave", "cancel_leave"]
 

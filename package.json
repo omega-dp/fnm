@@ -1,0 +1,23 @@
+{
+  "name": "appseed-generic",
+  "version": "1.0.0",
+  "description": "Generic tooling by AppSeed",
+  "main": "gulpfile.js",
+  "author": "AppSeed",
+  "keywords": [
+      "css",
+      "sass",
+      "gulp",
+      "web"
+  ],
+  "homepage": "https://appseed.us",
+  "bugs": {
+      "email": "support@appseed.us"
+  },
+  "license": "MIT License",
+  "devDependencies": {
+      "browser-sync": "^2.27.4",
+      "del": "^6.0.0",
+      "gulp": "^4.0.2"
+  }
+}

@@ -8,11 +8,10 @@ from django.views.generic import TemplateView
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
 urlpatterns = [
-    path("", TemplateView.as_view(template_name="application.html"), name="application"),
-    path("about/", TemplateView.as_view(template_name="pages/about.html"), name="about"),
+    path('', include('fnm.smartdesk.urls')),
     # Django Admin, use {% url 'admin:index' %}
     path(settings.ADMIN_URL, admin.site.urls),
-    path("accounts/", include("allauth.urls")),
+    # path("accounts/", include("allauth.urls")),
     # Your stuff: custom urls includes go here
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 if settings.DEBUG:
@@ -59,3 +58,7 @@ if settings.DEBUG:
         import debug_toolbar
 
         urlpatterns = [path("__debug__/", include(debug_toolbar.urls))] + urlpatterns
+
+admin.site.site_header = "SmartDesk Admin"
+admin.site.site_title = "SmartDesk Admin"
+admin.site.index_title = "Welcome to SmartDesk Admin"
