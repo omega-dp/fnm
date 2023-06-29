@@ -73,7 +73,7 @@ WSGI_APPLICATION = "config.wsgi.application"
 # ------------------------------------------------------------------------------
 DJANGO_APPS = [
     "django.contrib.auth",
-    'admin_soft.apps.AdminSoftDashboardConfig',
+    # 'smartdesk.apps.AdminSoftDashboardConfig',
     "fnm.smartdesk",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
