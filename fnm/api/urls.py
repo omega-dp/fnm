@@ -2,7 +2,7 @@ from django.urls import include, path
 from rest_framework.authtoken.views import obtain_auth_token
 
 urlpatterns = [
-    path("", include("fnm.users.api.urls"), name="users"),
+    path("users/", include("fnm.users.api.urls"), name="users"),
     path("cards/", include("fnm.cards.urls"), name="cards"),
     path("request/", include("fnm.request.urls"), name="requests")
 

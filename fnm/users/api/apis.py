@@ -39,7 +39,7 @@ class UserProfileMeAPI(ApiAuthMixin, APIView):
 # TODO: When JWT is resolved, add authenticated version
 class UserListApi(APIView):
     class Pagination(LimitOffsetPagination):
-        default_limit = 1
+        default_limit = 50
 
     class FilterSerializer(serializers.Serializer):
         id = serializers.IntegerField(required=False)
@@ -49,7 +49,7 @@ class UserListApi(APIView):
     class OutputSerializer(serializers.ModelSerializer):
         class Meta:
             model = User
-            fields = ("id", "email", "is_admin")
+            fields = ("id", "email", "username", "is_admin")
 
     def get(self, request):
         # Make sure the filters are valid, if passed

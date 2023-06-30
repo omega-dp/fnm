@@ -1,7 +1,7 @@
 import uuid
 
 from django.contrib.auth.base_user import AbstractBaseUser
-from django.contrib.auth.models import AbstractUser, PermissionsMixin
+from django.contrib.auth.models import PermissionsMixin
 from django.core.exceptions import ValidationError
 from django.urls import reverse
 from django.utils import timezone

@@ -1,6 +1,6 @@
 from django.urls import include, path
 
-from .apis import UserProfileMeAPI
+from .apis import UserProfileMeAPI, UserListApi
 
 from .auth import (
     UserJwtLoginApi,
@@ -23,7 +23,7 @@ urlpatterns = [
         ),
     ),
     path(
-        "jwt/",
+        "auth/",
         include(
             (
                 [
@@ -39,4 +39,5 @@ urlpatterns = [
 urlpatterns += [
     # Other URLs
     path('profile/', UserProfileMeAPI.as_view(), name='profile'),
+    path('list/', UserListApi.as_view(), name='users-list'),
 ]
