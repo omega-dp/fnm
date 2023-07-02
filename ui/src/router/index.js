@@ -1,9 +1,15 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
+// import { useUserStore } from '@/stores/user.store';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
+      {
+    path: '/login',
+    name: 'Login',
+    component: () => import('../views/Login.vue'),
+  },
     {
       path: '/',
       name: 'home',
@@ -19,5 +25,19 @@ const router = createRouter({
     }
   ]
 })
+
+// Navigation guard to protect routes
+/* router.beforeEach((to, from, next) => {
+  const userStore = useUserStore();
+  const isLoggedIn = userStore.access !== '';
+
+  if (to.name !== 'Login' && !isLoggedIn) {
+    // Redirect to login if not logged in
+    next({ name: 'Login' });
+  } else {
+    // Allow access to the route
+    next();
+  }
+}); */
 
 export default router

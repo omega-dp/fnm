@@ -11,7 +11,7 @@
           </div>
           <div>
             <p class="mb-2 text-sm font-medium text-gray-600 dark:text-gray-400">
-              Total clients
+              Total Requests
             </p>
             <p class="text-lg font-semibold text-gray-700 dark:text-gray-200">
               6389
@@ -27,10 +27,10 @@
           </div>
           <div>
             <p class="mb-2 text-sm font-medium text-gray-600 dark:text-gray-400">
-              Account Balance
+             $103049
             </p>
             <p class="text-lg font-semibold text-gray-700 dark:text-gray-200">
-              $46,760.89
+              Total Payouts
             </p>
           </div>
         </div>
@@ -44,10 +44,10 @@
           </div>
           <div>
             <p class="mb-2 text-sm font-medium text-gray-600 dark:text-gray-400">
-              New sales
+              New Requests
             </p>
             <p class="text-lg font-semibold text-gray-700 dark:text-gray-200">
-              376
+              123
             </p>
           </div>
         </div>
@@ -60,7 +60,7 @@
           </div>
           <div>
             <p class="mb-2 text-sm font-medium text-gray-600 dark:text-gray-400">
-              Pending contacts
+              Pending Requests
             </p>
             <p class="text-lg font-semibold text-gray-700 dark:text-gray-200">
               35
@@ -76,8 +76,8 @@
           <thead>
             <tr
               class="text-xs font-semibold tracking-wide text-left text-gray-500 uppercase border-b dark:border-gray-700 bg-gray-50 dark:text-gray-400 dark:bg-gray-800">
-              <th class="px-4 py-3">Client</th>
-              <th class="px-4 py-3">Amount</th>
+              <th class="px-4 py-3">Employees</th>
+              <th class="px-4 py-3">Request Amount</th>
               <th class="px-4 py-3">Status</th>
               <th class="px-4 py-3">Date</th>
             </tr>

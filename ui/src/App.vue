@@ -1,26 +1,35 @@
 <template>
-  <div class="flex h-screen bg-gray-50 dark:bg-gray-900" id="app">
-    <Sidebar :isSideMenuOpen="isSideMenuOpen" @close-side-menu="isSideMenuOpen = false" />
+  <div className="flex h-screen bg-gray-50 dark:bg-gray-900" id="app">
+    <!-- Use the useUserStore to check authentication status -->
+    <template v-if="userStore.loggedIn">
+      <Sidebar :isSideMenuOpen="isSideMenuOpen" @close-side-menu="isSideMenuOpen = false"/>
 
-    <div class="flex flex-col flex-1 w-full">
-      <Navigation @open-side-menu="isSideMenuOpen = !isSideMenuOpen" />
-      <div class="p-6 dark:text-white">
-        <RouterView />
+      <div className="flex flex-col flex-1 w-full">
+        <Navigation @open-side-menu="isSideMenuOpen = !isSideMenuOpen"/>
+        <div className="p-6 dark:text-white">
+          <RouterView/>
+        </div>
       </div>
-    </div>
+    </template>
+
+    <!-- Show the login page if not authenticated -->
+    <template v-else>
+      <Login/>
+    </template>
   </div>
 </template>
 
-<script setup lang="ts">
-import { ref } from "vue";
-import "@/assets/main.min.css"
+<script setup lang="js">
+import {ref} from 'vue';
+import Login from "@/views/Login.vue";
+import '@/assets/main.min.css';
+import {useUserStore} from './stores/user.store'; // Import the useUserStore
 
-// import { useAuthStore } from './stores/'
+import {RouterView} from 'vue-router';
+import Sidebar from './components/Sidebar.vue';
+import Navigation from './components/Navigation.vue';
 
-import { RouterView } from 'vue-router'
-import Sidebar from './components/Sidebar.vue'
-import Navigation from './components/Navigation.vue'
-
-// const authStore = useAuthStore();
 const isSideMenuOpen = ref(false);
+
+const userStore = useUserStore(); // Initialize the useUserStore
 </script>
