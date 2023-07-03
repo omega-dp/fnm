@@ -1,4 +1,3 @@
-
 from rest_framework import serializers, generics
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.response import Response
@@ -36,8 +35,51 @@ class UserProfileMeAPI(ApiAuthMixin, APIView):
         return Response(data)
 
 
+class GetProfileDataAPI(ApiAuthMixin, APIView):
+
+    class OutputSerializer(serializers.Serializer):
+        id = serializers.IntegerField()
+        user = serializers.IntegerField()
+        email = serializers.EmailField()
+        username = serializers.CharField()
+        avatar = serializers.CharField()
+        contactNo = serializers.CharField()
+        address = serializers.CharField()
+        jobTitle = serializers.CharField()
+        jobGroup = serializers.CharField()
+        department = serializers.CharField()
+        dateOfBirth = serializers.DateField()
+
+    def get(self, request):
+        user_profile = request.user.userprofile
+        data = user_profile_get_data(user_profile=user_profile)
+
+        serializer = self.OutputSerializer(data)
+        return Response(serializer.data)
+
+
+class UpdateProfileAPI(ApiAuthMixin, APIView):
+    def post(self, request):
+        class InputSerializer(serializers.Serializer):
+            contactNo = serializers.CharField(required=False)
+            address = serializers.CharField(required=False)
+            jobTitle = serializers.CharField(required=False)
+            jobGroup = serializers.ChoiceField(choices=UserProfile.JOB_GROUP_CHOICES, required=False)
+            department = serializers.CharField(required=False)
+            dateOfBirth = serializers.DateField(required=False)
+
+        serializer = InputSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        user_profile = request.user.userprofile
+        user_profile = user_profile_update(user_profile=user_profile, data=serializer.validated_data)
+
+        return Response({"message": "Profile updated successfully."})
+
+
 # TODO: When JWT is resolved, add authenticated version
-class UserListApi(APIView):
+class UserListApi(ApiAuthMixin, APIView):
+
     class Pagination(LimitOffsetPagination):
         default_limit = 50
 
@@ -65,6 +107,3 @@ class UserListApi(APIView):
             request=request,
             view=self,
         )
-
-
-

@@ -55,6 +55,7 @@ class UserJwtLoginApi(TokenObtainPairView):
         response = super().post(request, *args, **kwargs)
 
         if response.status_code == status.HTTP_201_CREATED:
+
             response.status_code = status.HTTP_200_OK
 
         return response

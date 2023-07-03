@@ -346,7 +346,7 @@ REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
 
-APP_DOMAIN = env("APP_DOMAIN", default="http://localhost:8000")
+APP_DOMAIN = env("APP_DOMAIN", default="http://127.0.0.1:8000")
 
 # django-cors-headers - https://github.com/adamchainz/django-cors-headers#setup
 CORS_URLS_REGEX = r"^/api/.*$"

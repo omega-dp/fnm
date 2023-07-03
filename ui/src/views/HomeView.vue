@@ -83,7 +83,7 @@
             </tr>
           </thead>
           <tbody class="bg-white divide-y dark:divide-gray-700 dark:bg-gray-800">
-            <TableRow v-for="person in people" :key="person.name" :person="person" />
+            <TableRow />
           </tbody>
         </table>
       </div>
@@ -92,7 +92,7 @@
       <div
         class="grid px-4 py-3 text-xs font-semibold tracking-wide text-gray-500 uppercase border-t dark:border-gray-700 bg-gray-50 sm:grid-cols-9 dark:text-gray-400 dark:bg-gray-800">
         <span class="flex items-center col-span-3">
-          Showing 1-{{ people.length }} of {{ people.length }}
+          Showing 1-10 of 25
         </span>
         <span class="col-span-2"></span>
         <!-- Pagination -->
@@ -162,58 +162,25 @@
   </main>
 </template>
 
-<script setup lang="ts">
-import { ref } from 'vue';
-import CTA from '../components/CTA.vue';
-import Card from "../components/Card.vue";
-import TableRow from "../components/tables/TableRow.vue";
+<script>
+import {onMounted, ref} from 'vue';
+import CTA from '@/components/CTA.vue';
+import TableRow from "@/components/tables/TableRow.vue";
 import { UserGroupIcon, CashIcon, ShoppingCartIcon, ChatIcon } from '@heroicons/vue/outline';
+import Card from "@/components/Card.vue";
 
-const people = ref([
-  {
-    img: "https://images.unsplash.com/flagged/photo-1570612861542-284f4c12e75f?ixlib=rb-1.2.1&q=80&fm=jpg&crop=entropy&cs=tinysrgb&w=200&fit=max&ixid=eyJhcHBfaWQiOjE3Nzg0fQ",
-    name: "Hans Burger",
-    description: "10x Developer",
-    amount: "863.45",
-    status: "approved"
-  },
-  {
-    img: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-0.3.5&q=80&fm=jpg&crop=entropy&cs=tinysrgb&w=200&facepad=3&fit=facearea&s=707b9c33066bf8808c934c8ab394dff6",
-    name: "Jolina Angelie",
-    description: "Unemployed",
-    amount: "369.95",
-    status: "pending"
-  },
-  {
-    img: "https://images.unsplash.com/photo-1551069613-1904dbdcda11?ixlib=rb-1.2.1&q=80&fm=jpg&crop=entropy&cs=tinysrgb&w=200&fit=max&ixid=eyJhcHBfaWQiOjE3Nzg0fQ",
-    name: "Sarah Curry",
-    description: "10x Developer",
-    amount: "86.00",
-    status: "declined"
-  },
-  {
-    img: "https://images.unsplash.com/photo-1551006917-3b4c078c47c9?ixlib=rb-1.2.1&q=80&fm=jpg&crop=entropy&cs=tinysrgb&w=200&fit=max&ixid=eyJhcHBfaWQiOjE3Nzg0fQ",
-    name: "Rulia Joberts",
-    description: "Actress",
-    amount: "1276.45",
-    status: "declined"
-  },
-  {
-    img: "https://images.unsplash.com/photo-1546456073-6712f79251bb?ixlib=rb-1.2.1&q=80&fm=jpg&crop=entropy&cs=tinysrgb&w=200&fit=max&ixid=eyJhcHBfaWQiOjE3Nzg0fQ",
-    name: "Wenzel Dashington",
-    description: "Actor",
-    amount: "863.45",
-    status: "approved"
-  },
-  {
-    img: "https://images.unsplash.com/photo-1502720705749-871143f0e671?ixlib=rb-0.3.5&q=80&fm=jpg&crop=entropy&cs=tinysrgb&w=200&fit=max&s=b8377ca9f985d80264279f277f3a67f5",
-    name: "Dave Li",
-    description: "Influencer",
-    amount: "863.45",
-    status: "pending"
-  },
 
-])
 
+export default {
+  components: {
+    TableRow,
+    UserGroupIcon,
+    CashIcon,
+    ShoppingCartIcon,
+    ChatIcon,
+    CTA,
+    Card
+  },
+}
 
 </script>

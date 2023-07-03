@@ -3,7 +3,7 @@ import axios from 'axios';
 
 // Create a new Axios instance with the base URL
 const api = axios.create({
-  baseURL: 'http://localhost:8000/api', // Replace this with your API base URL
+  baseURL: 'http://127.0.0.1:8000/api', // Replace this with your API base URL
 });
 
 // Add an interceptor to include the access token in requests
@@ -54,3 +54,51 @@ export const useUserStore = defineStore('user', {
     },
   },
 });
+
+export const useUserListStore = defineStore('userList', {
+
+  state: () => ({
+    users: [],
+  }),
+  actions: {
+    async fetchUsers() {
+      try {
+        const res = await api.get('/users/list/');
+        this.users = res.data;
+      } catch (error) {
+        console.error(error);
+      }
+    },
+  },
+});
+
+
+export const useProfileStore = defineStore('profile', {
+  state: () => ({
+    id: null,
+    user: null,
+    email: '',
+    username: null,
+    avatar: '',
+    contactNo: '',
+    address: '',
+    jobTitle: '',
+    jobGroup: '',
+    department: '',
+    dateOfBirth: '',
+  }),
+  actions: {
+    async fetchProfile() {
+      try {
+        const response = await api.get('/users/profile/me/');
+        const profileData = response.data;
+        // Update the store state with the profile data
+        Object.assign(this, profileData);
+
+      } catch (error) {
+        console.error(error);
+      }
+    },
+  },
+});
+
