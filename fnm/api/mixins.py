@@ -11,7 +11,6 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
 
-
 def get_auth_header(headers):
     value = headers.get("Authorization")
 
@@ -96,6 +95,16 @@ class StaffRestrictedApiAuthMixin(ApiAuthMixin):
       is added to restrict the access to staff or superadmins only.
     """
     permission_classes = (IsAuthenticated, StaffOrSuperAdminPermission)
+
+
+class AdminAuthMixin(ApiAuthMixin):
+    def has_permission(self, request):
+        # Check if the user is authenticated
+        if not request.user.is_authenticated:
+            return False
+
+        # Check if the user is an admin
+        return request.user.is_staff
 
 
 class CanRequestMixin(ApiAuthMixin):

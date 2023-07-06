@@ -9,9 +9,11 @@ from .auth import (
     UserJwtLogoutApi,
     UserSessionLoginApi,
     UserSessionLogoutApi,
+    UserCreateAPIView,
 )
 
 urlpatterns = [
+    path('create/', UserCreateAPIView.as_view(), name="create-user"),
     path(
         "auth/session/",
         include(

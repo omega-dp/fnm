@@ -28,12 +28,14 @@ def auth_logout(user: User) -> User:
 
 def user_create(*,
                 email: str,
+                username: str = None,
                 is_active: bool = True,
                 is_superuser: bool = False,
                 is_admin: bool = False,
                 password: Optional[str] = None) -> User:
     user = User.objects.create_user(
         email=email,
+        username=username,
         is_admin=is_admin,
         is_active=is_active,
         password=password)

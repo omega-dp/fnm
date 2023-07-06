@@ -38,3 +38,6 @@ class Media(BaseModel):
             return self.file.url
 
         return f"{settings.APP_DOMAIN}{self.file.url}"
+
+    class Meta:
+        db_table = "Media"

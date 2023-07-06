@@ -5,9 +5,11 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
 
-from fnm.api.mixins import ApiAuthMixin
-from .services import auth_logout
+from fnm.api.mixins import ApiAuthMixin, AdminAuthMixin
+from .services import auth_logout, user_create
 from fnm.users.api.selectors import user_get_login_data
+
+User = settings.AUTH_USER_MODEL
 
 
 class UserSessionLoginApi(APIView):
@@ -72,4 +74,40 @@ class UserJwtLogoutApi(ApiAuthMixin, APIView):
             response.delete_cookie(settings.JWT_AUTH["JWT_AUTH_COOKIE"])
 
         return response
+
+
+class UserCreateAPIView(AdminAuthMixin, APIView):
+    def post(self, request):
+        # Get the data from the request
+        email = request.data.get('email')
+        username = request.data.get('username', "")
+        password = request.data.get('password')
+
+        # Create the user using the service function
+        user = user_create(email=email, password=password)
+
+        # Additional optional fields
+        is_active = request.data.get('is_active', True)
+        is_superuser = request.data.get('is_superuser', False)
+
+        # Update the user attributes
+        user.username = username
+        user.is_active = is_active
+        user.is_superuser = is_superuser
+        user.save()
+
+        # Return the user details in the response
+        response_data = {
+            'message': 'User created successfully',
+            'user': {
+                'email': user.email,
+                'username': user.username,
+                'password': password,
+                'is_active': user.is_active,
+                'is_superuser': user.is_superuser
+                # Add any additional user details you want to include
+            }
+        }
+
+        return Response(response_data)
 

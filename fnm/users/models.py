@@ -5,7 +5,6 @@ from django.contrib.auth.models import PermissionsMixin
 from django.core.exceptions import ValidationError
 from django.urls import reverse
 from django.utils import timezone
-from django.utils.translation import gettext_lazy as _
 from django.db import models
 from fnm.common.models import BaseModel
 from django.contrib.auth.models import BaseUserManager as BUM
@@ -22,11 +21,15 @@ def upload_avatar(instance, filename):
 
 
 class BaseUserManager(BUM):
-    def create_user(self, email, is_active=True, is_admin=False, password=None):
+    def create_user(self, email, is_active=True, username=None, is_admin=False, password=None):
         if not email:
             raise ValueError("Users must have an email address")
 
-        user = self.model(email=self.normalize_email(email.lower()), is_active=is_active, is_admin=is_admin)
+        user = self.model(
+            email=self.normalize_email(email.lower()),
+            username=username,
+            is_active=is_active,
+            is_admin=is_admin)
 
         if password is not None:
             user.set_password(password)
@@ -38,9 +41,10 @@ class BaseUserManager(BUM):
 
         return user
 
-    def create_superuser(self, email, password=None):
+    def create_superuser(self, email, username, password=None):
         user = self.create_user(
             email=email,
+            username=username,
             is_active=True,
             is_admin=True,
             password=password,

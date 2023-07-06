@@ -4,7 +4,7 @@ from rest_framework.generics import get_object_or_404
 from .selectors import imprest_request_list, leave_requests_list
 from ..models import ImprestRequest, LeaveRequest
 from .services import create_imprest_request, imprest_request_update, update_leave_request
-from ...api.mixins import ApiAuthMixin, StaffRestrictedApiAuthMixin, CanRequestMixin
+from ...api.mixins import ApiAuthMixin, StaffRestrictedApiAuthMixin
 from ...api.pagination import get_paginated_response, LimitOffsetPagination
 from ...users.models import User
 from rest_framework import serializers, status

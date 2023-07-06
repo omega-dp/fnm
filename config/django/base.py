@@ -102,6 +102,7 @@ LOCAL_APPS = [
     "fnm.request",
     "fnm.media",
     "fnm.cards",
+    "fnm.notifications",
     # Your stuff: custom apps go here
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
@@ -174,12 +175,14 @@ STATIC_ROOT = str(BASE_DIR / "staticfiles")
 # https://docs.djangoproject.com/en/dev/ref/settings/#static-url
 STATIC_URL = "/static/"
 # https://docs.djangoproject.com/en/dev/ref/contrib/staticfiles/#std:setting-STATICFILES_DIRS
-STATICFILES_DIRS = [str(APPS_DIR / "static")]
+# STATICFILES_DIRS = [str(APPS_DIR / "static")]
 # https://docs.djangoproject.com/en/dev/ref/contrib/staticfiles/#staticfiles-finders
+"""
 STATICFILES_FINDERS = [
     "django.contrib.staticfiles.finders.FileSystemFinder",
     "django.contrib.staticfiles.finders.AppDirectoriesFinder",
 ]
+"""
 
 # MEDIA
 # ------------------------------------------------------------------------------
@@ -359,9 +362,6 @@ SPECTACULAR_SETTINGS = {
     "VERSION": "1.0.0",
     "SERVE_PERMISSIONS": ["rest_framework.permissions.IsAdminUser"],
 }
-# Vue
-# django-webpack-loader
-# ------------------------------------------------------------------------------
 
 # Your stuff...
 # ------------------------------------------------------------------------------
