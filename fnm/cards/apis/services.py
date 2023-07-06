@@ -21,9 +21,9 @@ class JobCardService:
         return job_card
 
     @transaction.atomic
-    def assign_job_card(self, job_card_id, assigned_to):
+    def assign_job_card(self, job_card_id, assigned_to, deadline=None):
         job_card = JobCard.objects.get(id=job_card_id)
-        job_card.assign_job(assigned_to)
+        job_card.assign_job(assigned_to, deadline)
         return job_card
 
     @transaction.atomic

@@ -40,7 +40,7 @@ urlpatterns = [
 
 urlpatterns += [
     # Other URLs
-    path('profile/me/', GetProfileDataAPI.as_view(), name='profile'),
-    path('profile/me/update/', UpdateProfileAPI.as_view(), name='profile'),
+    path('me/', GetProfileDataAPI.as_view(), name='profile'),
+    path('me/update/', UpdateProfileAPI.as_view(), name='profile'),
     path('list/', UserListApi.as_view(), name='users-list'),
 ]

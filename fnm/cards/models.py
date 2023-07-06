@@ -38,11 +38,13 @@ class JobCard(BaseModel):
                                  null=True,
                                  blank=True)
     due_date = models.DateTimeField(blank=True, null=True)
+    deadline = models.DateTimeField(blank=True, null=True)
 
-    def assign_job(self, assigned_to):
+    def assign_job(self, assigned_to, deadline):
         self.assigned_to = assigned_to
+        self.deadline = deadline
         self.status = "assigned"
-        self.save(update_fields=["assigned_to", "status", "updated_at"])
+        self.save(update_fields=["assigned_to", "deadline", "status", "updated_at"])
 
     def approve_job(self):
         self.status = "approved"

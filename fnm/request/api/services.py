@@ -70,22 +70,61 @@ def adjust_leave_balance(user, duration):
     return remaining_days - duration
 
 
-def create_leave_request(user_id, leave_type, custom_duration, leave_attachment, reason, start_date, end_date, status):
-    try:
-        user = User.objects.get(id=user_id)
+class LeaveRequestService:
+    @transaction.atomic
+    def create_leave_request(self, user, leave_type, custom_duration, leave_attachment, status, reason, start_date=None,
+                             end_date=None):
+        if not start_date:
+            # Set default start_date as a week ahead
+            start_date = date.today() + timedelta(days=7)
+
+        if custom_duration > 0:
+            # Use custom_duration if provided and greater than 0, otherwise use duration as 0
+            duration = custom_duration
+            end_date = start_date + timedelta(days=duration - 1)
+        else:
+            duration = 0
+            end_date = None
+
         leave_request = LeaveRequest.objects.create(
             user=user,
+            is_new=True,
             leave_type=leave_type,
             custom_duration=custom_duration,
-            leave_attachment=leave_attachment,
             reason=reason,
+            leave_attachment=leave_attachment,
             start_date=start_date,
             end_date=end_date,
-            status=status
+            status=status,
         )
+
         return leave_request
-    except User.DoesNotExist:
-        raise ValueError("User not found.")
+
+    def get_leave_request(self, request_id):
+        try:
+            leave_request = LeaveRequest.objects.get(id=request_id)
+            return leave_request
+        except LeaveRequest.DoesNotExist:
+            raise ValueError("Leave request does not exist")
+
+    def approve_leave_request(self, leave_request):
+        leave_request.status = "approved"
+        leave_request.save()
+
+    def reject_leave_request(self, leave_request):
+        leave_request.status = "rejected"
+        leave_request.save()
+
+    def cancel_leave_request(self, leave_request):
+        leave_request.status = "cancelled"
+        leave_request.save()
+
+    def get_leave_balance(self, user):
+        total_leave_days = sum(
+            LeaveRequest.objects.filter(user=user, status="approved", leave_type="yearly")
+            .values_list("duration", flat=True)
+        )
+        return 40 - total_leave_days
 
 
 def update_leave_request(*, leave_request: LeaveRequest,
@@ -133,4 +172,3 @@ def cancel_leave_request(*, leave_request: LeaveRequest) -> LeaveRequest:
     leave_request.status = "cancelled"
     leave_request.save()
     return leave_request
-

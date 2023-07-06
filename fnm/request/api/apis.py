@@ -10,7 +10,7 @@ from ...users.models import User
 from rest_framework import serializers, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from .services import create_leave_request
+from .services import LeaveRequestService
 from .services import (
     approve_leave_request,
     reject_leave_request,
@@ -158,58 +158,40 @@ class ImprestRequestListAPI(ApiAuthMixin, APIView):
 
 
 class LeaveRequestCreateAPI(ApiAuthMixin, APIView):
-    class InputSerializer(serializers.Serializer):
-        user_id = serializers.IntegerField()
+    class LeaveRequestInputSerializer(serializers.Serializer):
         leave_type = serializers.ChoiceField(choices=LeaveRequest.LEAVE_TYPES, default="yearly")
         custom_duration = serializers.IntegerField(required=False, default=0)
         leave_attachment = serializers.FileField(required=False)
         reason = serializers.CharField()
         start_date = serializers.DateField(required=False)
         end_date = serializers.DateField(required=False)
-        status = serializers.ChoiceField(choices=LeaveRequest.STATUS_CHOICES, default="pending")
+        status = serializers.ChoiceField(choices=LeaveRequest.STATUS_CHOICES, required=False, default="pending")
 
     def post(self, request):
-        serializer = self.InputSerializer(data=request.data)
+        serializer = self.LeaveRequestInputSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        user_id = serializer.validated_data.get("user_id")
-        leave_type = serializer.validated_data.get("leave_type")
-        custom_duration = serializer.validated_data.get("custom_duration")
-        leave_attachment = serializer.validated_data.get("leave_attachment")
-        reason = serializer.validated_data.get("reason")
-        start_date = serializer.validated_data.get("start_date")
-        end_date = serializer.validated_data.get("end_date")
+        user = request.user
 
+        leave_request_service = LeaveRequestService()
         try:
-            leave_request = create_leave_request(
-                user_id=user_id,
-                leave_type=leave_type,
-                custom_duration=custom_duration,
-                leave_attachment=leave_attachment,
-                reason=reason,
-                start_date=start_date,
-                end_date=end_date,
-                status=status,
+            leave_request = leave_request_service.create_leave_request(
+                user=user,
+                leave_type=serializer.validated_data.get("leave_type"),
+                custom_duration=serializer.validated_data.get("custom_duration"),
+                leave_attachment=serializer.validated_data.get("leave_attachment"),
+                reason=serializer.validated_data.get("reason"),
+                start_date=serializer.validated_data.get("start_date"),
+                end_date=serializer.validated_data.get("end_date"),
+                status=serializer.validated_data.get("status")
             )
-
-            leave_data = {
-                "id": leave_request.id,
-                "user": leave_request.user.email,
-                "leave_type": leave_request.leave_type,
-                "custom_duration": leave_request.custom_duration,
-                "leave_attachment": leave_request.leave_attachment.url if leave_request.leave_attachment else None,
-                "reason": leave_request.reason,
-                "start_date": leave_request.start_date,
-                "end_date": leave_request.end_date,
-                "status": leave_request.status
-            }
-
-            return Response({
-                "message": "Leave request created successfully.",
-                "leave_request": leave_data
-            })
         except User.DoesNotExist:
-            return Response({"message": "User not found."}, status=404)
+            return Response({"message": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        return Response({
+            "message": "Leave request created successfully.",
+            "leave_request": leave_request.id
+        }, status=status.HTTP_201_CREATED)
 
 
 class LeaveRequestActionAPI(StaffRestrictedApiAuthMixin, APIView):
@@ -337,3 +319,4 @@ class LeaveRequestsListAPI(ApiAuthMixin, APIView):
             request=request,
             view=self,
         )
+

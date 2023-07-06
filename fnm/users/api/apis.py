@@ -74,7 +74,7 @@ class UpdateProfileAPI(ApiAuthMixin, APIView):
         user_profile = request.user.userprofile
         user_profile = user_profile_update(user_profile=user_profile, data=serializer.validated_data)
 
-        return Response({"message": "Profile updated successfully."})
+        return Response({"message": "Your profile updated successfully."})
 
 
 # TODO: When JWT is resolved, add authenticated version

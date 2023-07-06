@@ -103,9 +103,10 @@ class User(BaseModel, AbstractBaseUser, PermissionsMixin):
 
 class UserProfile(models.Model):
     JOB_GROUP_CHOICES = [
-        ("normal", "Normal"),
-        ("manager", "Manager"),
-        ("executive", "Executive"),
+        ("A", "Normal"),
+        ("B", "Manager"),
+        ("C", "Executive"),
+        ("D", "Other"),
     ]
 
     user = models.OneToOneField(User, on_delete=models.CASCADE, db_index=True)
@@ -113,7 +114,7 @@ class UserProfile(models.Model):
     contactNo = models.CharField(max_length=14, verbose_name="User Phone Number")
     address = models.TextField()
     jobTitle = models.CharField(max_length=100, blank=True)
-    jobGroup = models.CharField(max_length=20, default="Normal")
+    jobGroup = models.CharField(max_length=20, default="A")
     department = models.CharField(max_length=100, blank=True)
     dateOfBirth = models.DateField(blank=True, null=True)
     # notificationPreferences = models.ManyToManyField('Notification', related_name='user_profiles')

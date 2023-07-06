@@ -11,6 +11,7 @@ from fnm.users.api.selectors import user_get_login_data
 
 
 class UserSessionLoginApi(APIView):
+    permission_classes = []
     """
     Following https://docs.djangoproject.com/en/3.1/topics/auth/default/#how-to-log-a-user-in
     """

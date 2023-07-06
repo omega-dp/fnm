@@ -2,15 +2,25 @@ from rest_framework import serializers
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .services import JobCardService
-from ..models import JobCategory, JobCard
+from ..models import JobCard
 from ...api.mixins import ApiAuthMixin
+from ...request.models import User
 
 
 class JobCardSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = JobCard
-        fields = ['id', 'job_category', 'name', 'description', 'assigned_to', 'status', 'approver', 'due_date']
+        fields = ['id',
+                  'job_category',
+                  'name',
+                  'description',
+                  'assigned_to',
+                  'status',
+                  'approver',
+                  'due_date',
+                  'deadline'
+                  ]
 
 
 class CreateJobCardApi(ApiAuthMixin, APIView):
@@ -18,13 +28,19 @@ class CreateJobCardApi(ApiAuthMixin, APIView):
         # job_category = serializers.CharField(required=False)
         name = serializers.CharField()
         description = serializers.CharField()
-        assigned_to = serializers.IntegerField(required=False)
+        assigned_to = serializers.PrimaryKeyRelatedField(
+            queryset=User.objects.all(),
+            required=False
+        )
         due_date = serializers.DateTimeField(required=False)
 
     class OutputSerializer(serializers.Serializer):
         name = serializers.CharField()
         description = serializers.CharField()
-        assigned_to = serializers.IntegerField(required=False)
+        assigned_to = serializers.PrimaryKeyRelatedField(
+            queryset=User.objects.all(),
+            required=False
+        )
         due_date = serializers.DateTimeField(required=False)
 
     def post(self, request, *args, **kwargs):
@@ -45,7 +61,7 @@ class CreateJobCardApi(ApiAuthMixin, APIView):
         return Response(data=output_serializer.data)
 
 
-class ApproveJobCardApi(APIView):
+class ApproveJobCardApi(ApiAuthMixin, APIView):
     def post(self, request, *args, **kwargs):
         job_card_id = kwargs.get('pk')
         service = JobCardService(request.user)
@@ -53,7 +69,7 @@ class ApproveJobCardApi(APIView):
         return Response(data=JobCardSerializer(job_card).data)
 
 
-class EscalateJobCardApi(APIView):
+class EscalateJobCardApi(ApiAuthMixin, APIView):
     def post(self, request, *args, **kwargs):
         job_card_id = kwargs.get('pk')
         service = JobCardService(request.user)
@@ -61,22 +77,34 @@ class EscalateJobCardApi(APIView):
         return Response(data=JobCardSerializer(job_card).data)
 
 
-class AssignJobCardApi(APIView):
+class AssignJobCardApi(ApiAuthMixin, APIView):
     class InputSerializer(serializers.Serializer):
-        assigned_to = serializers.IntegerField()
+        deadline = serializers.DateTimeField(required=False)
+        assigned_to = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
 
     def post(self, request, *args, **kwargs):
         job_card_id = kwargs.get('pk')
         serializer = self.InputSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        assigned_to = serializer.validated_data['assigned_to']
+        assigned_to_id = serializer.validated_data['assigned_to'].id
+        try:
+            assigned_to_user = User.objects.get(id=assigned_to_id)
+        except User.DoesNotExist:
+            raise serializers.ValidationError("Invalid user ID")
+
         service = JobCardService(request.user)
-        job_card = service.assign_job_card(job_card_id, assigned_to)
+        job_card = service.assign_job_card(job_card_id, assigned_to_user)
+
+        deadline = serializer.validated_data.get('deadline')
+        if deadline:
+            job_card.deadline = deadline
+            job_card.save(update_fields=['deadline'])
+
         return Response(data=JobCardSerializer(job_card).data)
 
 
-class CompleteJobCardApi(APIView):
+class CompleteJobCardApi(ApiAuthMixin, APIView):
     def post(self, request, *args, **kwargs):
         job_card_id = kwargs.get('pk')
         service = JobCardService(request.user)
@@ -84,7 +112,7 @@ class CompleteJobCardApi(APIView):
         return Response(data=JobCardSerializer(job_card).data)
 
 
-class CloseJobCardApi(APIView):
+class CloseJobCardApi(ApiAuthMixin, APIView):
     def post(self, request, *args, **kwargs):
         job_card_id = kwargs.get('pk')
         service = JobCardService(request.user)
