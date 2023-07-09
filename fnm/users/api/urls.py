@@ -1,7 +1,6 @@
 from django.urls import include, path
 
-from .apis import UserProfileMeAPI,\
-    UserListApi, GetProfileDataAPI, UpdateProfileAPI
+# from .apis import UserResource
 
 
 from .auth import (
@@ -42,7 +41,7 @@ urlpatterns = [
 
 urlpatterns += [
     # Other URLs
-    path('me/', GetProfileDataAPI.as_view(), name='profile'),
-    path('me/update/', UpdateProfileAPI.as_view(), name='profile'),
-    path('list/', UserListApi.as_view(), name='users-list'),
+    # path('me/', UserResource.as_view(), name='user-resource'),
+    # path('me/update/', UpdateProfileAPI.as_view(), name='profile'),
+    # path('list/', UserListApi.as_view(), name='users-list'),
 ]

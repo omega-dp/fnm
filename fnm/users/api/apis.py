@@ -3,16 +3,15 @@ from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.contrib.auth import get_user_model
-from .selectors import user_list, user_get_login_data, user_profile_get_data
+from .selectors import user_list, user_profile_get_data
 from fnm.users.models import UserProfile
 from .services import user_profile_update
-from ...api.mixins import ApiAuthMixin
-from ...api.pagination import get_paginated_response
+from ...api.mixins import ApiAuthMixin, AdminAuthMixin
 
 User = get_user_model()
 
 
-class UserProfileMeAPI(ApiAuthMixin, APIView):
+class UserUpdateAPIView(ApiAuthMixin, APIView):
     class InputSerializer(serializers.Serializer):
         contactNo = serializers.CharField(required=False)
         address = serializers.CharField(required=False)
@@ -21,7 +20,7 @@ class UserProfileMeAPI(ApiAuthMixin, APIView):
         department = serializers.CharField(required=False)
         dateOfBirth = serializers.DateField(required=False)
 
-    def post(self, request):
+    def put(self, request):
         serializer = self.InputSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -30,13 +29,24 @@ class UserProfileMeAPI(ApiAuthMixin, APIView):
 
         return Response({"message": "Profile updated successfully."})
 
-    def get(self, request):
-        data = user_profile_get_data(user_profile=request.user.userprofile)
-        return Response(data)
+    def patch(self, request):
+        serializer = self.InputSerializer(data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+
+        user_profile = request.user.userprofile
+        user_profile = user_profile_update(user_profile=user_profile, data=serializer.validated_data)
+
+        return Response({"message": "Profile updated successfully."})
 
 
-class GetProfileDataAPI(ApiAuthMixin, APIView):
+class UserDeleteAPIView(AdminAuthMixin, APIView):
+    def delete(self, request):
+        user_profile = request.user.userprofile
+        user_profile.delete()
+        return Response({"message": "Profile deleted successfully."})
 
+
+class UserProfileAPIView(ApiAuthMixin, APIView):
     class OutputSerializer(serializers.Serializer):
         id = serializers.IntegerField()
         user = serializers.IntegerField()
@@ -58,52 +68,18 @@ class GetProfileDataAPI(ApiAuthMixin, APIView):
         return Response(serializer.data)
 
 
-class UpdateProfileAPI(ApiAuthMixin, APIView):
-    def post(self, request):
-        class InputSerializer(serializers.Serializer):
-            contactNo = serializers.CharField(required=False)
-            address = serializers.CharField(required=False)
-            jobTitle = serializers.CharField(required=False)
-            jobGroup = serializers.ChoiceField(choices=UserProfile.JOB_GROUP_CHOICES, required=False)
-            department = serializers.CharField(required=False)
-            dateOfBirth = serializers.DateField(required=False)
-
-        serializer = InputSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
-        user_profile = request.user.userprofile
-        user_profile = user_profile_update(user_profile=user_profile, data=serializer.validated_data)
-
-        return Response({"message": "Your profile updated successfully."})
-
-
-# TODO: When JWT is resolved, add authenticated version
-class UserListApi(ApiAuthMixin, APIView):
+class UserListAPIView(ApiAuthMixin, generics.ListAPIView):
+    class OutputSerializer(serializers.Serializer):
+        id = serializers.IntegerField()
+        email = serializers.EmailField()
+        username = serializers.CharField()
+        is_admin = serializers.BooleanField()
 
     class Pagination(LimitOffsetPagination):
-        default_limit = 50
+        default_limit = 40
 
-    class FilterSerializer(serializers.Serializer):
-        id = serializers.IntegerField(required=False)
-        is_admin = serializers.BooleanField(required=False, allow_null=True, default=None)
-        email = serializers.EmailField(required=False)
+    serializer_class = OutputSerializer
+    pagination_class = Pagination
 
-    class OutputSerializer(serializers.ModelSerializer):
-        class Meta:
-            model = User
-            fields = ("id", "email", "username", "is_admin")
-
-    def get(self, request):
-        # Make sure the filters are valid, if passed
-        filters_serializer = self.FilterSerializer(data=request.query_params)
-        filters_serializer.is_valid(raise_exception=True)
-
-        users = user_list(filters=filters_serializer.validated_data)
-
-        return get_paginated_response(
-            pagination_class=self.Pagination,
-            serializer_class=self.OutputSerializer,
-            queryset=users,
-            request=request,
-            view=self,
-        )
+    def get_queryset(self):
+        return user_list(filters=self.request.query_params)

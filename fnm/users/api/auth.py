@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.contrib.auth import authenticate, login, logout
 from rest_framework import serializers, status
 from rest_framework.response import Response
@@ -58,7 +59,6 @@ class UserJwtLoginApi(TokenObtainPairView):
         response = super().post(request, *args, **kwargs)
 
         if response.status_code == status.HTTP_201_CREATED:
-
             response.status_code = status.HTTP_200_OK
 
         return response
@@ -78,36 +78,50 @@ class UserJwtLogoutApi(ApiAuthMixin, APIView):
 
 class UserCreateAPIView(AdminAuthMixin, APIView):
     def post(self, request):
-        # Get the data from the request
-        email = request.data.get('email')
-        username = request.data.get('username', "")
-        password = request.data.get('password')
+        try:
+            # Get the data from the request
+            email = request.data.get('email')
+            username = request.data.get('username', "")
+            password = request.data.get('password')
 
-        # Create the user using the service function
-        user = user_create(email=email, password=password)
+            # Create the user using the service function
+            user = user_create(email=email, password=password)
 
-        # Additional optional fields
-        is_active = request.data.get('is_active', True)
-        is_superuser = request.data.get('is_superuser', False)
+            # Additional optional fields
+            is_active = request.data.get('is_active', True)
+            is_superuser = request.data.get('is_superuser', False)
 
-        # Update the user attributes
-        user.username = username
-        user.is_active = is_active
-        user.is_superuser = is_superuser
-        user.save()
+            # Update the user attributes
+            user.username = username
+            user.is_active = is_active
+            user.is_superuser = is_superuser
+            user.save()
 
-        # Return the user details in the response
-        response_data = {
-            'message': 'User created successfully',
-            'user': {
-                'email': user.email,
-                'username': user.username,
-                'password': password,
-                'is_active': user.is_active,
-                'is_superuser': user.is_superuser
-                # Add any additional user details you want to include
+            # Return the user details in the response
+            response_data = {
+                'message': 'User created successfully',
+                'user': {
+                    'email': user.email,
+                    'username': user.username,
+                    'password': password,
+                    'is_active': user.is_active,
+                    'is_superuser': user.is_superuser
+                    # Add any additional user details you want to include
+                }
             }
-        }
 
-        return Response(response_data)
+            return Response(response_data, status=status.HTTP_201_CREATED)
+
+        except ValueError as e:
+            # Handle value error
+            error_message = str(e)
+            response_data = {'error': error_message}
+            return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
+
+        except ValidationError as e:
+            # Handle validation errors
+            error_messages = dict(e)
+            response_data = {'errors': error_messages}
+            return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
+
 

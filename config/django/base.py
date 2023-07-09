@@ -103,6 +103,7 @@ LOCAL_APPS = [
     "fnm.media",
     "fnm.cards",
     "fnm.notifications",
+    "fnm.api",
     # Your stuff: custom apps go here
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
@@ -357,14 +358,13 @@ CORS_URLS_REGEX = r"^/api/.*$"
 # By Default swagger ui is available only to admin user(s). You can change permission classes to change that
 # See more configuration options at https://drf-spectacular.readthedocs.io/en/latest/settings.html#settings
 SPECTACULAR_SETTINGS = {
-    "TITLE": "fnm API",
-    "DESCRIPTION": "Documentation of API endpoints of fnm",
+    "TITLE": "HelpDesk API",
+    "DESCRIPTION": "Documentation of API endpoints of HelpDesk",
     "VERSION": "1.0.0",
-    "SERVE_PERMISSIONS": ["rest_framework.permissions.IsAdminUser"],
+    "SERVE_PERMISSIONS": [],
 }
 
 # Your stuff...
 # ------------------------------------------------------------------------------
 from config.settings.jwt import *  # noqa
 from config.settings.files_and_storages import *  # noqa
-

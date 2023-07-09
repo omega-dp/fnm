@@ -15,7 +15,10 @@ def auth_jwt_response_payload_handler(token, user=None, request=None, issued_at=
     """
     Default implementation. Add whatever suits you here.
     """
-    return {"token": token}
+    return {
+        "token": token,
+        "user": user
+    }
 
 
 def auth_logout(user: User) -> User:

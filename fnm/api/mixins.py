@@ -5,6 +5,7 @@ from django.conf import settings
 from django.contrib import auth
 from rest_framework import status
 from rest_framework.authentication import BaseAuthentication, SessionAuthentication
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import BasePermission, IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -104,7 +105,10 @@ class AdminAuthMixin(ApiAuthMixin):
             return False
 
         # Check if the user is an admin
-        return request.user.is_staff
+        if not request.user.is_staff:
+            raise PermissionDenied("You do not have permission to perform this action.")
+
+        return True
 
 
 class CanRequestMixin(ApiAuthMixin):

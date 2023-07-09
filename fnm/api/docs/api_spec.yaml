@@ -1,0 +1,173 @@
+openapi: 3.0.0
+info:
+  title: Django API
+  version: 1.0.0
+
+servers:
+  - url: http://127.0.0.1/api/v1
+
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        username:
+          type: string
+        password:
+          type: string
+        is_active:
+          type: boolean
+        is_superuser:
+          type: boolean
+      required:
+        - email
+        - password
+    UserListResponse:
+      type: array
+      items:
+        $ref: '#/components/schemas/User'
+    UserDetailResponse:
+      $ref: '#/components/schemas/User'
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - BearerAuth: []
+
+paths:
+  /users:
+    get:
+      summary: Get Users
+      description: API endpoint to retrieve all users.
+      responses:
+        '200':
+          description: User list retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserListResponse'
+
+    post:
+      summary: Create User
+      description: API endpoint to create a new user.
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDetailResponse'
+        '400':
+          description: Bad request. Invalid user data.
+
+  /users/{id}:
+    get:
+      summary: Get User by ID
+      description: API endpoint to retrieve a user by ID.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the user
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: User retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDetailResponse'
+        '404':
+          description: User not found
+
+    put:
+      summary: Update User by ID
+      description: API endpoint to update a user by ID.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the user
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '200':
+          description: User updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDetailResponse'
+        '400':
+          description: Bad request. Invalid user data.
+        '404':
+          description: User not found
+
+    delete:
+      summary: Delete User by ID
+      description: API endpoint to delete a user by ID.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the user
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: User deleted successfully
+        '404':
+          description: User not found
+
+  /users/login/jwt:
+    post:
+      summary: User JWT Login
+      description: API endpoint to log in a user and obtain a JWT token.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '200':
+          description: User JWT login successful
+        '400':
+          description: Bad request. Invalid email or password.
+        '403':
+          description: Forbidden. The user account is inactive or suspended.
+
+  /users/login/session:
+    post:
+      summary: User Session Login
+      description: API endpoint to log in a user using session-based authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '200':
+          description: User session login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDetailResponse'
+        '400':
+          description: Bad request. Invalid email or password.
+        '403':
+          description: Forbidden. The user account is inactive or suspended.

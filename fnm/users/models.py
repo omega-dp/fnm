@@ -10,6 +10,7 @@ from fnm.common.models import BaseModel
 from django.contrib.auth.models import BaseUserManager as BUM
 
 
+
 def upload_avatar(instance, filename):
     """Function to define the upload path for avatar images."""
     return f"user_avatars/{instance.user.email}/{filename}"

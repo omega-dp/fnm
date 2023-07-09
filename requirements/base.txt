@@ -28,3 +28,8 @@ boto3~=1.26.160
 django-filter~=23.2
 
 
+
+pytest~=7.3.2
+pytz~=2023.3
+attrs~=23.1.0
+django-debug-toolbar~=4.1.0
