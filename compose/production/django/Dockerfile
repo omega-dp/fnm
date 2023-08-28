@@ -12,7 +12,7 @@ ARG DJANGO_AWS_S3_CUSTOM_DOMAIN
 ENV DJANGO_AWS_S3_CUSTOM_DOMAIN=${DJANGO_AWS_S3_CUSTOM_DOMAIN}
 RUN npm run build
 # define an alias for the specific python version used in this file.
-FROM python:3.11.4-slim-bullseye as python
+FROM python:3.11.5-slim-bullseye as python
 
 # Python build stage
 FROM python as python-build-stage
